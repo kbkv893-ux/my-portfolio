@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>የወጪ ደብተር</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #F4E8C1;
+            color: #2C2C2C;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: auto;
+        }
+
+        h1.title {
+            text-align: center;
+            color: #1A237E;
+            margin-bottom: 20px;
+            font-size: 26px;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+            border-top: 4px solid #1A237E;
+        }
+
+        .card h2 {
+            font-size: 18px;
+            color: #1A237E;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1c7a3;
+            border-radius: 10px;
+            font-size: 15px;
+            background-color: #faf8f0;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #1A237E;
+        }
+
+        .btn {
+            background-color: #1B5E20;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #2E7D32;
+        }
+
+        .summary-info {
+            margin-top: 15px;
+            font-size: 15px;
+            display: flex;
+            justify-content: space-between;
+            background: #fdfbf7;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid #eee4c8;
+        }
+
+        .table-container {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #1A237E;
+            color: white;
+            padding: 10px 8px;
+            font-size: 13px;
+        }
+
+        th:first-child { border-top-left-radius: 8px; }
+        th:last-child { border-top-right-radius: 8px; }
+
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f0e6cc;
+        }
+
+        .delete-btn {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover {
+            background-color: #b71c1c;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="title">የወጪ ደብተር</h1>
+
+        <!-- ካፒታል ማስገቢያ -->
+        <div class="card">
+            <h2>ካፒታል</h2>
+            <div class="form-group">
+                <input type="number" id="capitalInput" placeholder="መነሻ ካፒታል (ብር)">
+            </div>
+            <button class="btn" onclick="setCapital()">አስቀምጥ</button>
+            
+            <div class="summary-info">
+                <span>ካፒታል: <b id="displayCapital">0</b> ብር</span>
+                <span>ቀሪ: <b id="displayRemaining" style="color: #1B5E20;">0</b> ብር</span>
+            </div>
+        </div>
+
+        <!-- አዲስ ወጪ መመዝገቢያ -->
+        <div class="card">
+            <h2>አዲስ ወጪ</h2>
+            <div class="form-group">
+                <input type="date" id="expenseDate">
+            </div>
+            <div class="form-group">
+                <input type="number" id="expenseAmount" placeholder="መጠን (ብር)">
+            </div>
+            <div class="form-group">
+                <input type="text" id="expenseReason" placeholder="ለምን ምክንያት?">
+            </div>
+            <button class="btn" onclick="addExpense()">ጨምር</button>
+        </div>
+
+        <!-- የወጪዎች ዝርዝር ሰንጠረዥ -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ቀን</th>
+                        <th>መጠን</th>
+                        <th>ምክንያት</th>
+                        <th>ቀሪ</th>
+                        <th>ድርጊት</th>
+                    </tr>
+                </thead>
+                <tbody id="expenseTableBody">
+                    <!-- ወጪዎች እዚህ ይገባሉ -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // መረጃዎችን ከስልኩ ማህደረ ትውስታ (LocalStorage) ማምጣት
+        let capital = parseFloat(localStorage.getItem('capital')) || 0;
+        let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+
+        // የዛሬውን ቀን በቀጥታ መሙላት
+        document.getElementById('expenseDate').valueAsDate = new Date();
+
+        // ገጹ ሲከፈት መረጃውን ማሳየት
+        updateUI();
+
+        // ካፒታል ማስቀመጫ ተግባር
+        function setCapital() {
+            const inputVal = parseFloat(document.getElementById('capitalInput').value);
+            if (isNaN(inputVal) || inputVal < 0) {
+                alert("እባክዎ ትክክለኛ የካፒታል መጠን ያስገቡ!");
+                return;
+            }
+            capital = inputVal;
+            localStorage.setItem('capital', capital);
+            document.getElementById('capitalInput').value = '';
+            updateUI();
+        }
+
+        // አዲስ ወጪ መጨመሪያ ተግባር
+        function addExpense() {
+            const date = document.getElementById('expenseDate').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const reason = document.getElementById('expenseReason').value.trim();
+
+            if (!date || isNaN(amount) || amount <= 0 || !reason) {
+                alert("እባክዎ ሁሉንም ቦታዎች በትክክል ይሙሉ!");
+                return;
+            }
+
+            const newExpense = {
+                id: Date.now(),
+                date: date,
+                amount: amount,
+                reason: reason
+            };
+
+            expenses.push(newExpense);
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+
+            // ቦታዎቹን ማጽዳት
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseReason').value = '';
+            
+            updateUI();
+        }
+
+        // ወጪ መሰረዣ ተግባር
+        function deleteExpense(id) {
+            expenses = expenses.filter(item => item.id !== id);
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+            updateUI();
+        }
+
+        // ስክሪኑ ላይ ያሉትን ቁጥሮች እና ሰንጠረዥ ማደስ
+        function updateUI() {
+            document.getElementById('displayCapital').innerText = capital.toLocaleString();
+            
+            const tbody = document.getElementById('expenseTableBody');
+            tbody.innerHTML = '';
+
+            let runningBalance = capital;
+
+            expenses.forEach(item => {
+                runningBalance -= item.amount;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.date}</td>
+                    <td>${item.amount}</td>
+                    <td>${item.reason}</td>
+                    <td><b>${runningBalance}</b></td>
+                    <td><button class="delete-btn" onclick="deleteExpense(${item.id})">ሰርዝ</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            const remElement = document.getElementById('displayRemaining');
+            remElement.innerText = runningBalance.toLocaleString();
+            
+            // ቀሪ ገንዘብ ከዜሮ በታች ከሆነ ቀይ እንዲሆን
+            if (runningBalance < 0) {
+                remElement.style.color = '#d32f2f';
+            } else {
+                remElement.style.color = '#1B5E20';
+            }
+        }
+    </script>
+
+</body>
+</html>
